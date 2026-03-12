@@ -1,0 +1,19 @@
+{
+  "name": "duckdb-docset",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generate a Dash docset from the DuckDB documentation",
+  "scripts": {
+    "clone": "git clone --depth 1 https://github.com/duckdb/duckdb-web.git",
+    "generate": "node generate.js",
+    "clean": "rm -rf DuckDB.docset",
+    "install-docset": "cp -r DuckDB.docset ~/Library/Application\\ Support/Dash/DocSets/"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.1",
+    "markdown-it-anchor": "^9.2.0"
+  }
+}
