@@ -148,6 +148,29 @@ const md = markdownIt({
   .use(headingCollectorPlugin)
   .use(functionCollectorPlugin);
 
+// Dash table-of-contents anchors — renderer rule that prepends a dashAnchor
+// before each h2–h5 so Dash can build an in-page TOC sidebar.
+const defaultHeadingOpen =
+  md.renderer.rules.heading_open ||
+  function (tokens, idx, options, _env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
+
+md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  const level = parseInt(token.tag.slice(1), 10);
+  if (level >= 2 && level <= 5) {
+    const text = inlineText(tokens[idx + 1]).trim();
+    if (text) {
+      const type = env.dashTocType || "Section";
+      const encoded = encodeURIComponent(text);
+      const anchor = `<a name="//apple_ref/cpp/${type}/${encoded}" class="dashAnchor"></a>\n`;
+      return anchor + defaultHeadingOpen(tokens, idx, options, env, self);
+    }
+  }
+  return defaultHeadingOpen(tokens, idx, options, env, self);
+};
+
 // ---------- 1. Parse menu structure ----------
 
 function parseMenu() {
@@ -204,8 +227,8 @@ function createSkeleton() {
   <key>DocSetPlatformFamily</key> <string>duckdb</string>
   <key>isDashDocset</key>         <true/>
   <key>dashIndexFilePath</key>    <string>index.html</string>
+  <key>DashDocSetFamily</key>     <string>dashtoc</string>
   <key>DashDocSetFallbackURL</key><string>https://duckdb.org/docs/stable/</string>
-  <key>DashDocSetDefaultFTSEnabled</key><true/>
   <key>isJavaScriptEnabled</key>  <true/>
 </dict>
 </plist>`;
@@ -330,7 +353,8 @@ function convertPage(page, linkMap) {
   // Render markdown (plugins populate collectedHeadings / collectedFunctions)
   collectedHeadings = [];
   collectedFunctions = [];
-  let html = md.render(processed);
+  const env = { dashTocType: dashType(page.htmlPath) };
+  let html = md.render(processed, env);
   const headings = [...collectedHeadings];
   const functions = [...new Set(collectedFunctions)];
 
